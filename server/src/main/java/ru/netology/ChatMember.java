@@ -33,15 +33,27 @@ public class ChatMember implements Runnable {
 
             Message message;
             while (true) {
-                parseMessage(inBuf);
+                if (!parseMessage(inBuf)) {
+                    Server.logger.log("Чат покинул участник " + this.userName);
+                    Server.sendAll(new Message("server", "Чат покинул участник " + this.userName));
+                    Server.removeClient(this);
+                    break;
+                }
             }
-
         } catch (IOException e) {
             System.out.println(e.getMessage());
+        } finally {
+            try {
+                inBuf.close();
+                outBuf.close();
+                socket.close();
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
         }
     }
 
-    private void parseMessage(BufferedReader in) throws IOException {
+    private boolean parseMessage(BufferedReader in) throws IOException {
         String readLine;
         String writerName = "";
         String body;
@@ -55,8 +67,15 @@ public class ChatMember implements Runnable {
 
             cntHeader = 0;
             while (!(readLine = in.readLine().trim()).equals("")) {
-                if ((cntHeader == 0) && (readLine.startsWith("From: "))) {
-                    writerName = readLine.substring(readLine.indexOf(":")).trim();
+                if (cntHeader == 0) {
+                    if (readLine.equalsIgnoreCase("/exit"))
+                        return false;
+                    else if (readLine.startsWith("From: "))
+                        writerName = readLine.substring(readLine.indexOf(":")).trim();
+                    else {
+                        send(new Message("server", "Неправильный формат сообщения!\n"));
+                        return true;
+                    }
                 } else if ((cntHeader == 1) && (readLine.startsWith("Data-length: "))) {
                     bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":")).trim());
                 } else if ((cntHeader == 2) && (readLine.startsWith("Message: "))) {
@@ -68,12 +87,13 @@ public class ChatMember implements Runnable {
                     }
                 } else {
                     send(new Message("server", "Неправильный формат сообщения!\n"));
-                    break;
+                    return true;
                 }
 
                 cntHeader++;
                 while (!inBuf.ready()) {}
             }
+            return true;
         }
     }
 
