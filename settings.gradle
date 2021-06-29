@@ -1,0 +1,3 @@
+rootProject.name = 'online-chat'
+include 'server'
+
