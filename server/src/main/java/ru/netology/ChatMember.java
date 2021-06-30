@@ -11,8 +11,8 @@ public class ChatMember implements Runnable {
     private final Socket socket;
     private String userName;
 
-    private DateFormat dateFormat;
-    private Date date;
+    private final DateFormat dateFormat;
+    private final Date date;
 
     private BufferedOutputStream outBuf;
     private BufferedReader inBuf;
@@ -31,7 +31,6 @@ public class ChatMember implements Runnable {
 
             getUserName(outBuf, inBuf);
 
-            Message message;
             while (true) {
                 if (!parseMessage(inBuf)) {
                     Server.logger.log("Чат покинул участник " + this.userName);
@@ -56,7 +55,6 @@ public class ChatMember implements Runnable {
     private boolean parseMessage(BufferedReader in) throws IOException {
         String readLine;
         String writerName = "";
-        String body;
         Message message;
         int cntHeader;
         byte[] bodyByteArray;

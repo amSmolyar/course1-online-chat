@@ -40,7 +40,7 @@ public class Server {
 
         // чтение файла с настройками settings.txt и формирование объекта, содержащего параметры подключения:
         ConnectionParameters connectionParameters = readSettingsFile(PATH_TO_SETTINGS_FILE, SETTINGS_FILE);
-        logger.log("Чтение файла " + SETTINGS_FILE);
+        logger.log("Чтение файла " + SETTINGS_FILE + ".");
         // создание сервера, ожидание новых подключений и формирование новых потоков для работы с клиентами:
         try {
             serverSocket = new ServerSocket(connectionParameters.getPort());
@@ -58,7 +58,7 @@ public class Server {
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 Socket socket = serverSocket.accept();
-                executorService.submit(() -> new ChatMember(socket));
+                executorService.submit(new ChatMember(socket));
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());

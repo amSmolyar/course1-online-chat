@@ -48,7 +48,7 @@ public class Logger {
     public void log(String text) {
         lock.lock();
         try {
-            bufferedWriter.write(num++ + ".    " + dateFormat.format(date) + "    :\n   " + text);
+            bufferedWriter.write("\n\n" + num++ + ".    " + dateFormat.format(date) + "    :\n   " + text);
             bufferedWriter.flush();
             condition.signalAll();
         } catch (IOException e) {
@@ -79,7 +79,7 @@ public class Logger {
         logFile = new File(path + "/" + dirName + "//" + fileName);
         try {
             if (logFile.createNewFile()) {
-                temp.append("В каталоге " + path + "/" + dirName + " создан файл '" + fileName + "'.\n");
+                temp.append("   В каталоге " + path + "/" + dirName + " создан файл '" + fileName + "'.");
                 bufferedWriter = new BufferedWriter(new FileWriter(logFile));
             }
         } catch (IOException e) {
