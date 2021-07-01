@@ -2,6 +2,7 @@ package ru.netology;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -55,7 +56,7 @@ public class ChatMember implements Runnable {
     private boolean parseMessage(BufferedReader in) throws IOException {
         String readLine;
         String writerName = "";
-        Message message;
+        Message message = null;
         int cntHeader;
         byte[] bodyByteArray;
         while (true) {
@@ -68,20 +69,24 @@ public class ChatMember implements Runnable {
                 if (cntHeader == 0) {
                     if (readLine.equalsIgnoreCase("/exit"))
                         return false;
-                    else if (readLine.startsWith("From: "))
-                        writerName = readLine.substring(readLine.indexOf(":")).trim();
+                    else if (readLine.startsWith("From:"))
+                        writerName = readLine.substring(readLine.indexOf(":")+1).trim();
                     else {
                         send(new Message("server", "Неправильный формат сообщения!\n"));
                         return true;
                     }
-                } else if ((cntHeader == 1) && (readLine.startsWith("Data-length: "))) {
-                    bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":")).trim());
-                } else if ((cntHeader == 2) && (readLine.startsWith("Message: "))) {
+                } else if ((cntHeader == 1) && (readLine.startsWith("Data-length:"))) {
+                    try {
+                        bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":")+1).trim());
+                    } catch (NumberFormatException e) {
+                        System.out.println(e.getMessage());
+                        send(new Message("server", "Неправильный формат сообщения!\n"));
+                        return true;
+                    }
+                } else if ((cntHeader == 2) && (readLine.startsWith("Message:"))) {
                     if (bodyLength > 0) {
                         bodyByteArray = readBody(inBuf, bodyLength);
-                        message = new Message(writerName, bodyLength, bodyByteArray.toString(), dateFormat.format(date));
-                        send(message);
-                        Server.logger.log(message);
+                        message = new Message(writerName, bodyLength, new String(bodyByteArray, StandardCharsets.UTF_8), dateFormat.format(date));
                     }
                 } else {
                     send(new Message("server", "Неправильный формат сообщения!\n"));
@@ -91,8 +96,12 @@ public class ChatMember implements Runnable {
                 cntHeader++;
                 while (!inBuf.ready()) {}
             }
-            return true;
+            break;
         }
+
+        Server.sendAll(message);
+        Server.logger.log(message);
+        return true;
     }
 
     private byte[] readBody(BufferedReader in, int bodyLength) throws IOException {
@@ -107,9 +116,9 @@ public class ChatMember implements Runnable {
 
     public void send(Message message) {
         try {
-            outBuf.write(("From: " + message.getWriter() +
-                        "\nData-length: " + message.getBodyLength() +
-                        "\nMessage: \n" +
+            outBuf.write(("\r\nFrom: " + message.getWriter() +
+                        "\r\nData-length: " + message.getBodyLength() +
+                        "\r\nMessage: \n" +
                         message.getBody() + "\r\n" +
                         "\r\n").getBytes());
             outBuf.flush();
@@ -124,7 +133,7 @@ public class ChatMember implements Runnable {
 
         String clientMessage;
         while (true) {
-            if ((clientMessage = inBuf.readLine().trim()).equals("")) {
+            if (!(clientMessage = inBuf.readLine().trim()).equals("")) {
                 this.userName = clientMessage;
                 if (!Server.listMember.contains(this)) {
                     Server.listMember.add(this);
@@ -148,8 +157,7 @@ public class ChatMember implements Runnable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ChatMember member = (ChatMember) o;
-        return socket.equals(member.socket) &&
-                Objects.equals(userName, member.getUserName());
+        return Objects.equals(userName, member.getUserName());
     }
 
 }

@@ -1,3 +1,5 @@
 rootProject.name = 'online-chat'
 include 'server'
+include 'client'
+include 'library'
 

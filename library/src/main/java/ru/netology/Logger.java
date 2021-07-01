@@ -35,7 +35,7 @@ public class Logger {
     public void log(Message message) {
         lock.lock();
         try {
-            bufferedWriter.write(num++ + ".    " + message.toString());
+            bufferedWriter.write("\n\n" + num++ + ".    " + message.toString());
             bufferedWriter.flush();
             condition.signalAll();
         } catch (IOException e) {
@@ -54,7 +54,7 @@ public class Logger {
         } catch (IOException e) {
             System.out.println(e.getMessage());
         } finally {
-            lock.lock();
+            lock.unlock();
         }
     }
 
@@ -65,7 +65,7 @@ public class Logger {
     }
 
     public void close() throws IOException {
-            bufferedWriter.close();
+        bufferedWriter.close();
     }
 
     private String createLogFile(String path, String dirName, String fileName) {
