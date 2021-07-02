@@ -9,17 +9,14 @@ import java.util.Date;
 import java.util.Objects;
 
 public class ChatMember implements Runnable {
-    private final Socket socket;
+    private final InOut socketBuf;
     private String userName;
 
     private final DateFormat dateFormat;
     private final Date date;
 
-    private BufferedOutputStream outBuf;
-    private BufferedReader inBuf;
-
-    public ChatMember(Socket socket) {
-        this.socket = socket;
+    public ChatMember(InOut inOut) {
+        this.socketBuf = inOut;
         this.dateFormat = new SimpleDateFormat("dd/MM/yyyy   HH:mm:ss");
         this.date = new Date();
     }
@@ -27,13 +24,10 @@ public class ChatMember implements Runnable {
     @Override
     public void run() {
         try {
-            outBuf = new BufferedOutputStream(socket.getOutputStream());
-            inBuf = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            getUserName(outBuf, inBuf);
+            chooseUserName();
 
             while (true) {
-                if (!parseMessage(inBuf)) {
+                if (!parseMessage()) {
                     Server.logger.log("Чат покинул участник " + this.userName);
                     Server.sendAll(new Message("server", "Чат покинул участник " + this.userName));
                     Server.removeClient(this);
@@ -44,16 +38,14 @@ public class ChatMember implements Runnable {
             System.out.println(e.getMessage());
         } finally {
             try {
-                inBuf.close();
-                outBuf.close();
-                socket.close();
+                socketBuf.close();
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
         }
     }
 
-    private boolean parseMessage(BufferedReader in) throws IOException {
+    private boolean parseMessage() throws IOException {
         String readLine;
         String writerName = "";
         Message message = null;
@@ -62,10 +54,8 @@ public class ChatMember implements Runnable {
         while (true) {
             int bodyLength = -1;
 
-            while (!inBuf.ready()) {}
-
             cntHeader = 0;
-            while (!(readLine = in.readLine().trim()).equals("")) {
+            while (!(readLine = socketBuf.readLine().trim()).equals("")) {
                 if (cntHeader == 0) {
                     if (readLine.equalsIgnoreCase("/exit"))
                         return false;
@@ -85,16 +75,14 @@ public class ChatMember implements Runnable {
                     }
                 } else if ((cntHeader == 2) && (readLine.startsWith("Message:"))) {
                     if (bodyLength > 0) {
-                        bodyByteArray = readBody(inBuf, bodyLength);
-                        message = new Message(writerName, bodyLength, new String(bodyByteArray, StandardCharsets.UTF_8), dateFormat.format(date));
+                        String textFromBuf = socketBuf.readByteArrayAndConvertToString(bodyLength);
+                        message = new Message(writerName, bodyLength, textFromBuf, dateFormat.format(date));
                     }
                 } else {
                     send(new Message("server", "Неправильный формат сообщения!\n"));
                     return true;
                 }
-
                 cntHeader++;
-                while (!inBuf.ready()) {}
             }
             break;
         }
@@ -104,36 +92,24 @@ public class ChatMember implements Runnable {
         return true;
     }
 
-    private byte[] readBody(BufferedReader in, int bodyLength) throws IOException {
-        // =============  body  =============
-        ByteArrayOutputStream bodyBAOStream = new ByteArrayOutputStream();
-        while (bodyBAOStream.size() < bodyLength) {
-            while (!in.ready()) {}
-            bodyBAOStream.write(in.read());
-        }
-        return bodyBAOStream.toByteArray();
-    }
-
     public void send(Message message) {
         try {
-            outBuf.write(("\r\nFrom: " + message.getWriter() +
+            socketBuf.write("\r\nFrom: " + message.getWriter() +
                         "\r\nData-length: " + message.getBodyLength() +
                         "\r\nMessage: \n" +
                         message.getBody() + "\r\n" +
-                        "\r\n").getBytes());
-            outBuf.flush();
+                        "\r\n");
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
     }
 
-    public void getUserName(BufferedOutputStream outBuf, BufferedReader inBuf) throws IOException {
-        outBuf.write(("Введите имя для участия в чате: " + "\n").getBytes());
-        outBuf.flush();
+    public void chooseUserName() throws IOException {
+        socketBuf.write("Введите имя для участия в чате: " + "\n");
 
         String clientMessage;
         while (true) {
-            if (!(clientMessage = inBuf.readLine().trim()).equals("")) {
+            if (!(clientMessage = socketBuf.readLine().trim()).equals("")) {
                 this.userName = clientMessage;
                 if (!Server.listMember.contains(this)) {
                     Server.listMember.add(this);
@@ -141,8 +117,7 @@ public class ChatMember implements Runnable {
                     Server.sendAll(new Message("server", "К чату присоединился участник " + this.userName));
                     break;
                 } else {
-                    outBuf.write(("Выбранное вами имя занято. Повторите попытку: " + "\n").getBytes());
-                    outBuf.flush();
+                    socketBuf.write("Выбранное вами имя занято. Повторите попытку: " + "\n");
                 }
             }
         }

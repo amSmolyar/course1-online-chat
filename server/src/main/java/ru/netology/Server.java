@@ -1,14 +1,11 @@
 package ru.netology;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -39,7 +36,7 @@ public class Server {
         listMember = new CopyOnWriteArrayList<>();
 
         // чтение файла с настройками settings.txt и формирование объекта, содержащего параметры подключения:
-        ConnectionParameters connectionParameters = readSettingsFile(PATH_TO_SETTINGS_FILE, SETTINGS_FILE);
+        ConnectionParameters connectionParameters = ConnectionParameters.readSettingsFile(PATH_TO_SETTINGS_FILE, SETTINGS_FILE);
         logger.log("Чтение файла " + SETTINGS_FILE + ".");
         // создание сервера, ожидание новых подключений и формирование новых потоков для работы с клиентами:
         try {
@@ -55,17 +52,14 @@ public class Server {
     public void runServer() {
         ExecutorService executorService = Executors.newFixedThreadPool(N_THREAD_IN_POOL);
         // создание сервера, ожидание новых подключений и формирование новых потоков для работы с клиентами:
-        try {
-            while (!Thread.currentThread().isInterrupted()) {
-                Socket socket = serverSocket.accept();
-                executorService.submit(new ChatMember(socket));
-            }
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        } finally {
-            executorService.shutdown();
-            close();
+        while (!Thread.currentThread().isInterrupted()) {
+            InOut newConnection = new InOut(serverSocket);
+            FutureTask futureTask = (FutureTask) executorService.submit(new ChatMember(newConnection));
+            if (futureTask.isDone())
+                futureTask.cancel(false);
         }
+        executorService.shutdown();
+        close();
     }
 
     public static void sendAll(Message message) {
@@ -95,42 +89,5 @@ public class Server {
             System.out.println(e.getMessage());
         }
 
-    }
-
-    private static ConnectionParameters readSettingsFile(String path, String fileName) {
-        File file = new File(path, fileName);
-        String ip = "";
-        int nPort = -1;
-        ConnectionParameters connectionParameters;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split("=");
-                if (parts.length != 2)
-                    throw new RuntimeException("Неправильный формат записи данных в файле" + fileName);
-
-                if (parts[0].trim().toLowerCase().contains("ip")) {
-                    if (parts[1].trim().matches("(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})"))
-                        ip = parts[1].trim();
-                    else
-                        throw new RuntimeException("Неправильный формат записи данных в файле" + fileName);
-                } else if (parts[0].trim().toLowerCase().contains("port")) {
-                    try {
-                        nPort = Integer.parseInt(parts[1].trim());
-                    } catch (NumberFormatException e) {
-                        System.out.println(e.getMessage());
-                        System.out.println("Неправильный формат записи данных в файле" + fileName);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-
-        if (!ip.equals("") && (nPort != -1))
-            connectionParameters = new ConnectionParameters(ip, nPort);
-        else
-            throw new RuntimeException("Неправильный формат записи данных в файле" + fileName);
-        return connectionParameters;
     }
 }
