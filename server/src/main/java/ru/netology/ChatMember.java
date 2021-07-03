@@ -1,14 +1,14 @@
 package ru.netology;
 
 import java.io.*;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 
 public class ChatMember implements Runnable {
+    private static final String STOP_WORD = "/exit";
+
     private final InOut socketBuf;
     private String userName;
 
@@ -50,24 +50,23 @@ public class ChatMember implements Runnable {
         String writerName = "";
         Message message = null;
         int cntHeader;
-        byte[] bodyByteArray;
         while (true) {
             int bodyLength = -1;
 
             cntHeader = 0;
             while (!(readLine = socketBuf.readLine().trim()).equals("")) {
                 if (cntHeader == 0) {
-                    if (readLine.equalsIgnoreCase("/exit"))
+                    if (readLine.equalsIgnoreCase(STOP_WORD))
                         return false;
                     else if (readLine.startsWith("From:"))
-                        writerName = readLine.substring(readLine.indexOf(":")+1).trim();
+                        writerName = readLine.substring(readLine.indexOf(":") + 1).trim();
                     else {
                         send(new Message("server", "Неправильный формат сообщения!\n"));
                         return true;
                     }
                 } else if ((cntHeader == 1) && (readLine.startsWith("Data-length:"))) {
                     try {
-                        bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":")+1).trim());
+                        bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":") + 1).trim());
                     } catch (NumberFormatException e) {
                         System.out.println(e.getMessage());
                         send(new Message("server", "Неправильный формат сообщения!\n"));
@@ -95,18 +94,17 @@ public class ChatMember implements Runnable {
     public void send(Message message) {
         try {
             socketBuf.write("\r\nFrom: " + message.getWriter() +
-                        "\r\nData-length: " + message.getBodyLength() +
-                        "\r\nMessage: \n" +
-                        message.getBody() + "\r\n" +
-                        "\r\n");
+                    "\r\nData-length: " + message.getBodyLength() +
+                    "\r\nMessage: \n" +
+                    message.getBody() + "\r\n" +
+                    "\r\n");
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
     }
 
     public void chooseUserName() throws IOException {
-        socketBuf.write("Введите имя для участия в чате: " + "\n");
-
+        this.send(new Message("server", "Введите имя для участия в чате: " + "\n"));
         String clientMessage;
         while (true) {
             if (!(clientMessage = socketBuf.readLine().trim()).equals("")) {
@@ -114,10 +112,11 @@ public class ChatMember implements Runnable {
                 if (!Server.listMember.contains(this)) {
                     Server.listMember.add(this);
                     Server.logger.log("К чату присоединился участник " + this.userName);
+                    this.send(new Message("server", "Добро пожаловать!"));
                     Server.sendAll(new Message("server", "К чату присоединился участник " + this.userName));
                     break;
                 } else {
-                    socketBuf.write("Выбранное вами имя занято. Повторите попытку: " + "\n");
+                    this.send(new Message("server", "Выбранное вами имя занято. Повторите попытку: " + "\n"));
                 }
             }
         }

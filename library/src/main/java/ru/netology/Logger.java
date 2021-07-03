@@ -73,6 +73,8 @@ public class Logger {
         File srcDir = new File(path, dirName);
         if (srcDir.mkdir())
             temp.append("В каталоге " + path + " создана директория '" + dirName + "'.\n");
+        else if (srcDir.exists())
+            temp.append("В каталоге " + path + " получен доступ к директории '" + dirName + "'.\n");
         else
             throw new RuntimeException("Ошибка при создании директории '" + dirName + "' в каталоге " + path);
 
@@ -81,6 +83,8 @@ public class Logger {
             if (logFile.createNewFile()) {
                 temp.append("   В каталоге " + path + "/" + dirName + " создан файл '" + fileName + "'.");
                 bufferedWriter = new BufferedWriter(new FileWriter(logFile));
+            } else if (logFile.exists()) {
+                temp.append("   В каталоге " + path + "/" + dirName + " открыт файл '" + fileName + "' для логгирования.");
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
