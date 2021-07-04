@@ -90,14 +90,14 @@ public class Server {
         lock.unlock();
 
         logger.log("К чату присоединился участник " + client.getUserName());
-        sendAll(new Message("server", "К чату присоединился участник " + client.getUserName()));
+        sendAll(new Message("server", client.getUserName() + " has joined the chat"));
     }
 
     public static void removeClient(ChatMember client) {
         lock.lock();
         if (listMember.contains(client)) {
             logger.log("Чат покинул участник " + client.getUserName());
-            sendAll(new Message("server", "Чат покинул участник " + client.getUserName()));
+            sendAll(new Message("server", client.getUserName() + " left the chat"));
             listMember.remove(client);
         }
         condition.signalAll();
@@ -107,7 +107,8 @@ public class Server {
     public void close() {
         try {
             logger.log("Сервер остановлен!");
-            serverSocket.close();
+            if (serverSocket != null)
+                serverSocket.close();
             logger.close();
         } catch (IOException e) {
             System.out.println(e.getMessage());

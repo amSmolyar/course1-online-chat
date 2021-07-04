@@ -42,7 +42,7 @@ public class ChatMember implements Runnable {
         }
     }
 
-    private boolean parseMessage() {
+    public boolean parseMessage() {
         String readLine;
         String writerName = "";
         Message message;
@@ -55,10 +55,10 @@ public class ChatMember implements Runnable {
                 if (cntHeader == 0) {
                     if (readLine.equalsIgnoreCase(STOP_WORD))
                         return false;
-                    else if (readLine.startsWith("From:"))
-                        writerName = readLine.substring(readLine.indexOf(":") + 1).trim();
+                    else if (readLine.startsWith("From: " + this.userName))
+                        writerName = this.userName;
                     else {
-                        send(new Message("server", "Неправильный формат сообщения!\n"));
+                        send(new Message("server", "Incorrect message format!"));
                         return true;
                     }
                 } else if ((cntHeader == 1) && (readLine.startsWith("Data-length:"))) {
@@ -66,7 +66,7 @@ public class ChatMember implements Runnable {
                         bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":") + 1).trim());
                     } catch (NumberFormatException e) {
                         System.out.println(e.getMessage());
-                        send(new Message("server", "Неправильный формат сообщения!\n"));
+                        send(new Message("server", "Incorrect message format!"));
                         return true;
                     }
                 } else if ((cntHeader == 2) && (readLine.startsWith("Message:"))) {
@@ -77,7 +77,7 @@ public class ChatMember implements Runnable {
                         return true;
                     }
                 } else {
-                    send(new Message("server", "Неправильный формат сообщения!\n"));
+                    send(new Message("server", "Incorrect message format!"));
                     return true;
                 }
                 cntHeader++;
@@ -104,15 +104,16 @@ public class ChatMember implements Runnable {
     }
 
     public String chooseUserName() {
-        this.send(new Message("server", "Enter login: " + "\n"));
+        this.send(new Message("server", "Enter login: "));
         String clientMessage;
 
         while (true) {
             if (!(clientMessage = socketBuf.readLine().trim()).equals("")) {
+                this.userName = clientMessage;
                 if (!clientContains(this)) {
                     break;
                 } else {
-                    this.send(new Message("server", "Login busy. Try again: " + "\n"));
+                    this.send(new Message("server", "Login busy. Try again: "));
                 }
             }
         }
