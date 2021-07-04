@@ -2,6 +2,8 @@ package ru.netology;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,7 +23,7 @@ public class Server {
     private static final int N_THREAD_IN_POOL = 64;
 
     public static Logger logger;
-    public static CopyOnWriteArrayList<ChatMember> listMember;
+    public static List<ChatMember> listMember;
 
     private ServerSocket serverSocket;
 
@@ -33,7 +35,7 @@ public class Server {
         condition = lock.newCondition();
         // создание логгера:
         logger = Logger.getLogger(PATH_TO_LOG_DIR, LOG_DIR, LOG_NAME);
-        listMember = new CopyOnWriteArrayList<>();
+        listMember = new ArrayList<>();
 
         // чтение файла с настройками settings.txt и формирование объекта, содержащего параметры подключения:
         ConnectionParameters connectionParameters = ConnectionParameters.readSettingsFile(PATH_TO_SETTINGS_FILE, SETTINGS_FILE);
@@ -67,16 +69,38 @@ public class Server {
         for (ChatMember member : listMember) {
             member.send(message);
         }
+        logger.log(message);
         condition.signalAll();
         lock.unlock();
+    }
+
+    public static boolean clientContains(ChatMember client) {
+        lock.lock();
+        boolean isHere = listMember.contains(client);
+        condition.signalAll();
+        lock.unlock();
+
+        return isHere;
+    }
+
+    public static void addClient(ChatMember client) {
+        lock.lock();
+        listMember.add(client);
+        condition.signalAll();
+        lock.unlock();
+
+        logger.log("К чату присоединился участник " + client.getUserName());
+        sendAll(new Message("server", "К чату присоединился участник " + client.getUserName()));
     }
 
     public static void removeClient(ChatMember client) {
         lock.lock();
         if (listMember.contains(client)) {
+            logger.log("Чат покинул участник " + client.getUserName());
+            sendAll(new Message("server", "Чат покинул участник " + client.getUserName()));
             listMember.remove(client);
-            condition.signalAll();
         }
+        condition.signalAll();
         lock.unlock();
     }
 

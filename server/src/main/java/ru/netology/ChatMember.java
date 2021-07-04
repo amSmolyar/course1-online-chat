@@ -6,6 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 
+import static ru.netology.Server.*;
+
 public class ChatMember implements Runnable {
     private static final String STOP_WORD = "/exit";
 
@@ -23,13 +25,12 @@ public class ChatMember implements Runnable {
 
     @Override
     public void run() {
-        chooseUserName();
+        this.userName = chooseUserName();
+        addUser();
 
         while (true) {
             if (!parseMessage()) {
-                Server.logger.log("Чат покинул участник " + this.userName);
-                Server.sendAll(new Message("server", "Чат покинул участник " + this.userName));
-                Server.removeClient(this);
+                removeClient(this);
                 break;
             }
         }
@@ -44,7 +45,7 @@ public class ChatMember implements Runnable {
     private boolean parseMessage() {
         String readLine;
         String writerName = "";
-        Message message = null;
+        Message message;
         int cntHeader;
         while (true) {
             int bodyLength = -1;
@@ -72,6 +73,8 @@ public class ChatMember implements Runnable {
                     if (bodyLength > 0) {
                         String textFromBuf = socketBuf.readByteArrayAndConvertToString(bodyLength);
                         message = new Message(writerName, bodyLength, textFromBuf, dateFormat.format(date));
+                        sendAll(message);
+                        return true;
                     }
                 } else {
                     send(new Message("server", "Неправильный формат сообщения!\n"));
@@ -79,12 +82,8 @@ public class ChatMember implements Runnable {
                 }
                 cntHeader++;
             }
-            break;
+            return true;
         }
-
-        Server.sendAll(message);
-        Server.logger.log(message);
-        return true;
     }
 
     public void send(Message message) {
@@ -99,25 +98,25 @@ public class ChatMember implements Runnable {
         }
     }
 
-    public void chooseUserName() {
+    public void addUser() {
+        this.send(new Message("server", "Welcome!"));
+        addClient(this);
+    }
+
+    public String chooseUserName() {
         this.send(new Message("server", "Enter login: " + "\n"));
         String clientMessage;
 
         while (true) {
             if (!(clientMessage = socketBuf.readLine().trim()).equals("")) {
-                this.userName = clientMessage;
-                if (!Server.listMember.contains(this)) {
-                    Server.listMember.add(this);
-                    Server.logger.log("К чату присоединился участник " + this.userName);
-                    this.send(new Message("server", "Welcome!"));
-                    Server.sendAll(new Message("server", "К чату присоединился участник " + this.userName));
+                if (!clientContains(this)) {
                     break;
                 } else {
                     this.send(new Message("server", "Login busy. Try again: " + "\n"));
                 }
             }
         }
-
+        return clientMessage;
     }
 
     public String getUserName() {
