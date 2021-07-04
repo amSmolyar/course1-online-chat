@@ -30,20 +30,28 @@ public class InOut implements Closeable {
         }
     }
 
-    public String readLine() throws IOException  {
-        while (!reader.ready()) {}
-
-        return reader.readLine();
+    public String readLine()   {
+        try {
+            while (!reader.ready()) {}
+            return reader.readLine();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public String readByteArrayAndConvertToString(int cntByte) throws IOException {
+    public String readByteArrayAndConvertToString(int cntByte) {
         ByteArrayOutputStream bodyBAOStream = new ByteArrayOutputStream();
-        while (bodyBAOStream.size() < cntByte) {
-            while (!reader.ready()) {}
-            bodyBAOStream.write(reader.read());
+        try {
+            while (bodyBAOStream.size() < cntByte) {
+                while (!reader.ready()) {
+                }
+                bodyBAOStream.write(reader.read());
+            }
+            byte[] byteArray = bodyBAOStream.toByteArray();
+            return new String(byteArray, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        byte[] byteArray = bodyBAOStream.toByteArray();
-        return new String(byteArray, StandardCharsets.UTF_8);
     }
 
     public void write(String message) throws IOException {

@@ -60,12 +60,17 @@ public class Logger {
 
     public static Logger getLogger(String path, String dirName, String fileName) {
         //if (logger == null)
-            logger = new Logger(path, dirName, fileName);
+        logger = new Logger(path, dirName, fileName);
         return logger;
     }
 
-    public void close() throws IOException {
-        bufferedWriter.close();
+    public void close() {
+        try {
+            bufferedWriter.close();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
     }
 
     private String createLogFile(String path, String dirName, String fileName) {
@@ -82,16 +87,15 @@ public class Logger {
         try {
             if (logFile.createNewFile()) {
                 temp.append("   В каталоге " + path + "/" + dirName + " создан файл '" + fileName + "'.");
-                bufferedWriter = new BufferedWriter(new FileWriter(logFile));
+                bufferedWriter = new BufferedWriter(new FileWriter(logFile, true));
             } else if (logFile.exists()) {
                 temp.append("   В каталоге " + path + "/" + dirName + " открыт файл '" + fileName + "' для логгирования.");
-                bufferedWriter = new BufferedWriter(new FileWriter(logFile));
+                bufferedWriter = new BufferedWriter(new FileWriter(logFile, true));
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
             System.out.println("Ошибка при создании файла " + fileName);
         }
-
 
         return temp.toString();
     }

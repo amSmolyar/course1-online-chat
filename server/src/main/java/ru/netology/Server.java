@@ -28,7 +28,7 @@ public class Server {
     private static Lock lock;
     private static Condition condition;
 
-    public Server() throws IOException {
+    public Server() {
         lock = new ReentrantLock(true);
         condition = lock.newCondition();
         // создание логгера:

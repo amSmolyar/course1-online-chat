@@ -48,12 +48,18 @@ public class Client {
         // подключение к серверу:
         ConnectionParameters connectionParameters = ConnectionParameters.readSettingsFile(PATH_TO_SETTINGS_FILE, SETTINGS_FILE);
         connection = new InOut(connectionParameters.getIp(), connectionParameters.getPort());
+        Message inMessage;
 
         try {
-            while (this.clientName.equals(""))
-                readFromChat();
+            while (this.clientName.equals("")) {
+                inMessage = readFromChat();
+                registration(inMessage);
+            }
 
-            Thread reader = new Thread(() -> readFromChat());
+            Thread reader = new Thread(() -> {
+                Message message = readFromChat();
+                messageAnalise(message);
+            });
             reader.start();
 
             while (true) {
@@ -82,7 +88,75 @@ public class Client {
         }
     }
 
-    public String writeName () throws IOException {
+    public boolean writeToChat() {
+        lock.lock();
+        System.out.println("Введите текст:");
+        String scannerData;
+        scannerData = scanner.nextLine();
+        condition.signalAll();
+        lock.unlock();
+
+        send(new Message(this.clientName, scannerData));
+
+        return (!scannerData.equals(STOP_WORD));
+    }
+
+    public Message readFromChat() {
+        String readLine;
+        String writerName = "";
+        int bodyLength = 0;
+        String textFromBuf = "";
+        int cntHeader;
+
+        while (writerName.equals("") && textFromBuf.equals("")) {
+            bodyLength = -1;
+
+            cntHeader = 0;
+            while (!(readLine = connection.readLine().trim()).equals("")) {
+                if (cntHeader == 0) {
+                    if (readLine.startsWith("From:"))
+                        writerName = readLine.substring(readLine.indexOf(":") + 1).trim();
+                    else
+                        break;
+                } else if ((cntHeader == 1) && (readLine.startsWith("Data-length:"))) {
+                    try {
+                        bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":") + 1).trim());
+                    } catch (NumberFormatException e) {
+                        System.out.println(e.getMessage());
+                        break;
+                    }
+                } else if ((cntHeader == 2) && (readLine.startsWith("Message:"))) {
+                    if (bodyLength > 0) {
+                        textFromBuf = connection.readByteArrayAndConvertToString(bodyLength);
+                    }
+                }
+                cntHeader++;
+            }
+        }
+        return new Message(writerName, bodyLength, textFromBuf, dateFormat.format(date));
+    }
+
+    public void registration(Message message) throws IOException {
+        String body = message.getBody().toLowerCase();
+        if (message.getWriter().equals("server")) {
+            if (body.contains("enter login") || body.contains("busy")) {
+                writtenName = writeName();
+            } else if (body.contains("welcome")) {
+                logger = Logger.getLogger(PATH_TO_LOG_DIR, LOG_DIR, this.clientName + ".log");
+                this.clientName = writtenName;
+                logger.log(message);
+            }
+        }
+    }
+
+    public void messageAnalise(Message message) {
+        if (message.getWriter().equals(this.clientName))
+            message.setWriter("You");
+
+        logger.log(message);
+    }
+
+    public String writeName() throws IOException {
         lock.lock();
         System.out.println("Введите имя:");
         String scannerData;
@@ -95,86 +169,6 @@ public class Client {
         lock.unlock();
 
         connection.write(scannerData);
-        System.out.println(scannerData);
         return scannerData;
-
-    }
-
-    public boolean writeToChat () {
-        lock.lock();
-        System.out.println("Введите текст:");
-        String scannerData;
-        scannerData = scanner.nextLine();
-        condition.signalAll();
-        lock.unlock();
-
-        send(new Message(this.clientName, scannerData));
-
-        if (scannerData.equals(STOP_WORD))
-            return false;
-        else
-            return true;
-    }
-
-    public void readFromChat() {
-        String readLine;
-        String writerName = "";
-        int bodyLength;
-        int cntHeader;
-        try {
-            while (!Thread.currentThread().isInterrupted()) {
-                bodyLength = -1;
-
-                cntHeader = 0;
-                while (!(readLine = connection.readLine().trim()).equals("")) {
-                    if (cntHeader == 0) {
-                        if (readLine.startsWith("From:"))
-                            writerName = readLine.substring(readLine.indexOf(":") + 1).trim();
-                        else
-                            break;
-                    } else if ((cntHeader == 1) && (readLine.startsWith("Data-length:"))) {
-                        try {
-                            bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":") + 1).trim());
-                        } catch (NumberFormatException e) {
-                            System.out.println(e.getMessage());
-                            break;
-                        }
-                    } else if ((cntHeader == 2) && (readLine.startsWith("Message:"))) {
-                        if (bodyLength > 0) {
-                            String textFromBuf = connection.readByteArrayAndConvertToString(bodyLength);
-                            Message message = new Message(writerName, bodyLength, textFromBuf, dateFormat.format(date));
-
-                            String body = message.getBody().toLowerCase();
-                            if (writerName.equals("server")) {
-                                if (body.contains("enter login") || body.contains("busy")) {
-                                    writtenName = writeName();
-                                    break;
-                                } else if (body.contains("welcome")) {
-                                    logger = Logger.getLogger(PATH_TO_LOG_DIR, LOG_DIR, this.clientName + ".log");
-                                    this.clientName = writtenName;
-                                    logger.log(message);
-                                    break;
-                                } else {
-                                    logger.log(message);
-                                    break;
-                                }
-                            } else if (writerName.equals(this.clientName)) {
-                                message.setWriter("You");
-                                logger.log(message);
-                                break;
-                            } else {
-                                logger.log(message);
-                                break;
-                            }
-                        }
-                    } else {
-                        continue;
-                    }
-                    cntHeader++;
-                }
-            }
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
     }
 }

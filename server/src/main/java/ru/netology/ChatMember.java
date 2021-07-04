@@ -103,9 +103,10 @@ public class ChatMember implements Runnable {
         }
     }
 
-    public void chooseUserName() throws IOException {
+    public void chooseUserName() {
         this.send(new Message("server", "Enter login: " + "\n"));
         String clientMessage;
+
         while (true) {
             if (!(clientMessage = socketBuf.readLine().trim()).equals("")) {
                 this.userName = clientMessage;
@@ -120,6 +121,7 @@ public class ChatMember implements Runnable {
                 }
             }
         }
+
     }
 
     public String getUserName() {
