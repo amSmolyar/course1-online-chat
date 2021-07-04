@@ -31,6 +31,11 @@ public class Client {
     private static Lock lock;
     private static Condition condition;
 
+    public static void main(String[] args) {
+        Client client = new Client();
+        client.runClient();
+    }
+
     public Client() {
         this.dateFormat = new SimpleDateFormat("dd/MM/yyyy   HH:mm:ss");
         this.date = new Date();
@@ -55,7 +60,7 @@ public class Client {
                 if (!writeToChat())
                     break;
             }
-            
+
             reader.interrupt();
             logger.log("Выход из чата..");
             logger.close();
@@ -90,6 +95,7 @@ public class Client {
         lock.unlock();
 
         connection.write(scannerData);
+        System.out.println(scannerData);
         return scannerData;
 
     }
@@ -125,13 +131,13 @@ public class Client {
                         if (readLine.startsWith("From:"))
                             writerName = readLine.substring(readLine.indexOf(":") + 1).trim();
                         else
-                            continue;
+                            break;
                     } else if ((cntHeader == 1) && (readLine.startsWith("Data-length:"))) {
                         try {
                             bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":") + 1).trim());
                         } catch (NumberFormatException e) {
                             System.out.println(e.getMessage());
-                            continue;
+                            break;
                         }
                     } else if ((cntHeader == 2) && (readLine.startsWith("Message:"))) {
                         if (bodyLength > 0) {
@@ -140,19 +146,26 @@ public class Client {
 
                             String body = message.getBody().toLowerCase();
                             if (writerName.equals("server")) {
-                                if (body.contains("введите имя") || body.contains("имя занято")) {
+                                if (body.contains("enter login") || body.contains("busy")) {
                                     writtenName = writeName();
-                                } else if (body.contains("добро пожаловать")) {
+                                    break;
+                                } else if (body.contains("welcome")) {
                                     logger = Logger.getLogger(PATH_TO_LOG_DIR, LOG_DIR, this.clientName + ".log");
                                     this.clientName = writtenName;
                                     logger.log(message);
-                                } else
+                                    break;
+                                } else {
                                     logger.log(message);
+                                    break;
+                                }
                             } else if (writerName.equals(this.clientName)) {
                                 message.setWriter("You");
                                 logger.log(message);
-                            } else
+                                break;
+                            } else {
                                 logger.log(message);
+                                break;
+                            }
                         }
                     } else {
                         continue;

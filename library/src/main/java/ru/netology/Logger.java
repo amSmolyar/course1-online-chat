@@ -59,7 +59,7 @@ public class Logger {
     }
 
     public static Logger getLogger(String path, String dirName, String fileName) {
-        if (logger == null)
+        //if (logger == null)
             logger = new Logger(path, dirName, fileName);
         return logger;
     }
@@ -85,6 +85,7 @@ public class Logger {
                 bufferedWriter = new BufferedWriter(new FileWriter(logFile));
             } else if (logFile.exists()) {
                 temp.append("   В каталоге " + path + "/" + dirName + " открыт файл '" + fileName + "' для логгирования.");
+                bufferedWriter = new BufferedWriter(new FileWriter(logFile));
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());

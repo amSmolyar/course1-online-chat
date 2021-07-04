@@ -104,7 +104,7 @@ public class ChatMember implements Runnable {
     }
 
     public void chooseUserName() throws IOException {
-        this.send(new Message("server", "Введите имя для участия в чате: " + "\n"));
+        this.send(new Message("server", "Enter login: " + "\n"));
         String clientMessage;
         while (true) {
             if (!(clientMessage = socketBuf.readLine().trim()).equals("")) {
@@ -112,11 +112,11 @@ public class ChatMember implements Runnable {
                 if (!Server.listMember.contains(this)) {
                     Server.listMember.add(this);
                     Server.logger.log("К чату присоединился участник " + this.userName);
-                    this.send(new Message("server", "Добро пожаловать!"));
+                    this.send(new Message("server", "Welcome!"));
                     Server.sendAll(new Message("server", "К чату присоединился участник " + this.userName));
                     break;
                 } else {
-                    this.send(new Message("server", "Выбранное вами имя занято. Повторите попытку: " + "\n"));
+                    this.send(new Message("server", "Login busy. Try again: " + "\n"));
                 }
             }
         }
