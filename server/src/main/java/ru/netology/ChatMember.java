@@ -23,29 +23,25 @@ public class ChatMember implements Runnable {
 
     @Override
     public void run() {
-        try {
-            chooseUserName();
+        chooseUserName();
 
-            while (true) {
-                if (!parseMessage()) {
-                    Server.logger.log("Чат покинул участник " + this.userName);
-                    Server.sendAll(new Message("server", "Чат покинул участник " + this.userName));
-                    Server.removeClient(this);
-                    break;
-                }
+        while (true) {
+            if (!parseMessage()) {
+                Server.logger.log("Чат покинул участник " + this.userName);
+                Server.sendAll(new Message("server", "Чат покинул участник " + this.userName));
+                Server.removeClient(this);
+                break;
             }
+        }
+
+        try {
+            socketBuf.close();
         } catch (IOException e) {
             System.out.println(e.getMessage());
-        } finally {
-            try {
-                socketBuf.close();
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
-            }
         }
     }
 
-    private boolean parseMessage() throws IOException {
+    private boolean parseMessage() {
         String readLine;
         String writerName = "";
         Message message = null;
