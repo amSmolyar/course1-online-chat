@@ -33,7 +33,8 @@ public class InOut implements Closeable {
     public String readLine()   {
         try {
             while (!reader.ready()) {}
-            return reader.readLine();
+            String strIn = reader.readLine();
+            return strIn;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

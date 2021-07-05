@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -22,8 +21,8 @@ public class Server {
 
     private static final int N_THREAD_IN_POOL = 64;
 
-    public static Logger logger;
-    public static List<ChatMember> listMember;
+    private static Logger logger;
+    private static List<ChatMember> listMember;
 
     private ServerSocket serverSocket;
 
@@ -113,6 +112,13 @@ public class Server {
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
+    }
 
+    public static List<ChatMember> getListMember() {
+        return listMember;
+    }
+
+    public static Logger getLogger() {
+        return logger;
     }
 }
