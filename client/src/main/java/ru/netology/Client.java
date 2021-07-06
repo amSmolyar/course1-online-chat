@@ -18,7 +18,7 @@ public class Client {
 
     private static final String STOP_WORD = "/exit";
 
-    private Scanner scanner;
+    private ConsoleConnection consoleConnection;
     private InOut connection;
     private Logger logger;
     private String clientName = "";
@@ -31,29 +31,36 @@ public class Client {
     private static Lock lock;
     private static Condition condition;
 
-    public static void main(String[] args) {
-        Client client = new Client();
-        client.runClient();
-    }
-
     public Client() {
         this.dateFormat = new SimpleDateFormat("dd/MM/yyyy   HH:mm:ss");
         this.date = new Date();
         this.lock = new ReentrantLock(true);
         this.condition = lock.newCondition();
-    }
 
-    public void runClient() {
-        scanner = new Scanner(System.in);
+        consoleConnection = new ConsoleConnection();
         // подключение к серверу:
         ConnectionParameters connectionParameters = ConnectionParameters.readSettingsFile(PATH_TO_SETTINGS_FILE, SETTINGS_FILE);
         connection = new InOut(connectionParameters.getIp(), connectionParameters.getPort());
+    }
+
+    public Client(String ip, int port) {
+        this.dateFormat = new SimpleDateFormat("dd/MM/yyyy   HH:mm:ss");
+        this.date = new Date();
+        this.lock = new ReentrantLock(true);
+        this.condition = lock.newCondition();
+
+        consoleConnection = new ConsoleConnection();
+        // подключение к серверу:
+        connection = new InOut(ip, port);
+    }
+
+    public void runClient() {
         Message inMessage;
 
         try {
             while (this.clientName.equals("")) {
                 inMessage = readFromChat();
-                registration(inMessage);
+                registration(consoleConnection, inMessage);
             }
 
             Thread reader = new Thread(() -> {
@@ -63,14 +70,12 @@ public class Client {
             reader.start();
 
             while (true) {
-                if (!writeToChat())
+                if (!writeToChat(consoleConnection))
                     break;
             }
 
             reader.interrupt();
-            logger.log("Выход из чата..");
-            logger.close();
-            connection.close();
+            this.close();
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
@@ -78,7 +83,7 @@ public class Client {
 
     public void send(Message message) {
         try {
-            connection.write("\r\nFrom: " + message.getWriter() +
+            connection.write("\r\nFrom: " + this.clientName +
                     "\r\nData-length: " + message.getBodyLength() +
                     "\r\nMessage: \n" +
                     message.getBody() + "\r\n" +
@@ -88,17 +93,21 @@ public class Client {
         }
     }
 
-    public boolean writeToChat() {
+    public boolean writeToChat(ConsoleConnection consoleConnection) throws IOException {
         lock.lock();
         System.out.println("Введите текст:");
         String scannerData;
-        scannerData = scanner.nextLine();
+        scannerData = consoleConnection.nextLine();
         condition.signalAll();
         lock.unlock();
 
-        send(new Message(this.clientName, scannerData));
-
-        return (!scannerData.equals(STOP_WORD));
+        if (!scannerData.equals(STOP_WORD)) {
+            send(new Message(this.clientName, scannerData));
+            return true;
+        } else {
+            connection.write("\r\n" + STOP_WORD);
+            return false;
+        }
     }
 
     public Message readFromChat() {
@@ -108,42 +117,53 @@ public class Client {
         String textFromBuf = "";
         int cntHeader;
 
-        while (writerName.equals("") && textFromBuf.equals("")) {
+        while (writerName.equals("") || (bodyLength <= 0) || textFromBuf.equals("")) {
             bodyLength = -1;
 
             cntHeader = 0;
             while (!(readLine = connection.readLine().trim()).equals("")) {
                 if (cntHeader == 0) {
-                    if (readLine.startsWith("From:"))
+                    if (readLine.startsWith("From:")) {
                         writerName = readLine.substring(readLine.indexOf(":") + 1).trim();
-                    else
+                        if (writerName.equals(""))
+                            break;
+                    } else
                         break;
-                } else if ((cntHeader == 1) && (readLine.startsWith("Data-length:"))) {
+                } else if (cntHeader == 1) {
                     try {
-                        bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":") + 1).trim());
+                        if (readLine.startsWith("Data-length:")) {
+                            bodyLength = Integer.parseInt(readLine.substring(readLine.indexOf(":") + 1).trim());
+                            if (bodyLength <= 0)
+                                break;
+                        } else
+                            break;
                     } catch (NumberFormatException e) {
                         System.out.println(e.getMessage());
                         break;
                     }
-                } else if ((cntHeader == 2) && (readLine.startsWith("Message:"))) {
-                    if (bodyLength > 0) {
-                        textFromBuf = connection.readByteArrayAndConvertToString(bodyLength);
+                } else if (cntHeader == 2) {
+                    if (readLine.startsWith("Message:")) {
+                        if (bodyLength > 0) {
+                            textFromBuf = connection.readByteArrayAndConvertToString(bodyLength);
+                        } else
+                            break;
                     }
                 }
+
                 cntHeader++;
             }
         }
         return new Message(writerName, bodyLength, textFromBuf, dateFormat.format(date));
     }
 
-    public void registration(Message message) throws IOException {
+    public void registration(ConsoleConnection consoleConnection, Message message) throws IOException {
         String body = message.getBody().toLowerCase();
         if (message.getWriter().equals("server")) {
             if (body.contains("enter login") || body.contains("busy")) {
-                writtenName = writeName();
+                this.writtenName = writeName(consoleConnection);
             } else if (body.contains("welcome")) {
+                this.clientName = this.writtenName;
                 logger = Logger.getLogger(PATH_TO_LOG_DIR, LOG_DIR, this.clientName + ".log");
-                this.clientName = writtenName;
                 logger.log(message);
             }
         }
@@ -151,17 +171,17 @@ public class Client {
 
     public void messageAnalise(Message message) {
         if (message.getWriter().equals(this.clientName))
-            message.setWriter("You");
+            message.setWriter("you");
 
         logger.log(message);
     }
 
-    public String writeName() throws IOException {
+    public String writeName(ConsoleConnection consoleConnection) throws IOException {
         lock.lock();
         System.out.println("Введите имя:");
         String scannerData;
         while (true) {
-            scannerData = scanner.nextLine();
+            scannerData = consoleConnection.nextLine();
             if (!scannerData.equals(""))
                 break;
         }
@@ -170,5 +190,36 @@ public class Client {
 
         connection.write(scannerData);
         return scannerData;
+    }
+
+    public void close() throws IOException {
+        logger.log("Выход из чата..");
+        consoleConnection.close();
+        logger.close();
+        connection.close();
+    }
+
+    public InOut getConnection() {
+        return connection;
+    }
+
+    public Logger getLogger() {
+        return logger;
+    }
+
+    public void setLogger(String fileName) {
+        this.logger = Logger.getLogger(PATH_TO_LOG_DIR, LOG_DIR, fileName + ".log");
+    }
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public String getWrittenName() {
+        return writtenName;
+    }
+
+    public ConsoleConnection getConsoleConnection() {
+        return consoleConnection;
     }
 }
