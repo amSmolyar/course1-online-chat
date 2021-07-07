@@ -1,0 +1,183 @@
+
+
+1.    07/07/2021   13:16:34    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc создан файл 'log.txt'.
+
+2.    07/07/2021   13:16:29
+     from: server:
+         Welcome!
+
+
+
+3.    07/07/2021   13:16:29
+     from: server:
+         x1 has joined the chat
+
+
+
+1.    07/07/2021   13:30:26    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+2.    07/07/2021   13:30:24
+     from: server:
+         Welcome!
+
+
+
+3.    07/07/2021   13:30:24
+     from: server:
+         x1 has joined the chat
+
+
+
+4.    07/07/2021   13:30:24
+     from: server:
+         x2 has joined the chat
+
+
+
+5.    07/07/2021   13:30:24
+     from: x2:
+         Hello!
+
+
+
+
+1.    07/07/2021   14:06:39    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+2.    07/07/2021   14:06:18
+     from: server:
+         Welcome!
+
+
+
+3.    07/07/2021   14:06:18
+     from: server:
+         x1 has joined the chat
+
+
+
+4.    07/07/2021   14:06:18
+     from: server:
+         x2 has joined the chat
+
+
+
+5.    07/07/2021   14:06:18
+     from: x2:
+         Hello!
+
+
+
+
+6.    07/07/2021   14:06:18
+     from: x1:
+         hello
+
+
+
+7.    07/07/2021   14:06:18
+     from: server:
+         x2 left the chat
+
+
+
+8.    07/07/2021   14:06:39    :
+   Выход из чата..
+
+1.    07/07/2021   14:16:33    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:16:52    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:17:31    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:53    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:53    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:53    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+1.    07/07/2021   14:18:59    :
+   В каталоге D:/JAVA/online-chat/client получен доступ к директории 'doc'.
+   В каталоге D:/JAVA/online-chat/client/doc открыт файл 'log.txt' для логгирования.
+
+2.    07/07/2021   14:18:59
+     from: server:
+         Welcome!
+

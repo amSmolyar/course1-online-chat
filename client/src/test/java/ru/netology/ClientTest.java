@@ -286,7 +286,7 @@ class ClientTest {
     // Проверка метода registration(ConsoleConnection consoleConnection, Message message).
     // На вход метода подаются возможные варианты сообщений, связанных с регистрацией клиента в чате.
     // Первое сообщение - просьба ввести логин. Второе - логин занят. Третье - добро пожаловать.
-    // После каждого сообщения проверя.тся значения переменных имени клиента и введенного логина.
+    // После каждого сообщения проверяется значение переменной имени клиента.
     // Путем мокирования имитируется ввод текста пользователем через консоль
     @Test
     void test_registration() throws IOException {
@@ -314,23 +314,21 @@ class ClientTest {
         Message message1 = new Message("server", "Enter login: ");
 
         Mockito.when(scanner.nextLine()).thenReturn("client1");
+        assertEquals("", ClientName.getName());
         client.registration(scanner, message1);
-        assertEquals("", client.getClientName());
-        assertEquals("client1", client.getWrittenName());
+        assertEquals("client1", ClientName.getName());
 
         Message message2 = new Message("server", "Login busy. Try again: ");
 
         Mockito.when(scanner.nextLine()).thenReturn("client2");
         client.registration(scanner, message2);
-        assertEquals("", client.getClientName());
-        assertEquals("client2", client.getWrittenName());
+        assertEquals("client2", ClientName.getName());
 
         Message message3 = new Message("server", "Welcome!");
 
         Mockito.when(scanner.nextLine()).thenReturn("client2");
         client.registration(scanner, message3);
-        assertEquals("client2", client.getClientName());
-        assertEquals("client2", client.getWrittenName());
+        assertEquals("client2", ClientName.getName());
         assertNotNull(client.getLogger());
 
         try {

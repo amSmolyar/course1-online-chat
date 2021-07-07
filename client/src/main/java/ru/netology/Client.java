@@ -21,9 +21,6 @@ public class Client {
     private ConsoleConnection consoleConnection;
     private InOut connection;
     private Logger logger;
-    private String clientName = "";
-
-    private String writtenName;
 
     private final DateFormat dateFormat;
     private final Date date;
@@ -37,10 +34,14 @@ public class Client {
         this.lock = new ReentrantLock(true);
         this.condition = lock.newCondition();
 
+        ClientName.setName("");
+
         consoleConnection = new ConsoleConnection();
         // подключение к серверу:
         ConnectionParameters connectionParameters = ConnectionParameters.readSettingsFile(PATH_TO_SETTINGS_FILE, SETTINGS_FILE);
         connection = new InOut(connectionParameters.getIp(), connectionParameters.getPort());
+
+        logger = Logger.getLogger(PATH_TO_LOG_DIR, LOG_DIR, "log.txt");
     }
 
     public Client(String ip, int port) {
@@ -49,23 +50,29 @@ public class Client {
         this.lock = new ReentrantLock(true);
         this.condition = lock.newCondition();
 
+        ClientName.setName("");
+
         consoleConnection = new ConsoleConnection();
         // подключение к серверу:
         connection = new InOut(ip, port);
+        logger = Logger.getLogger(PATH_TO_LOG_DIR, LOG_DIR, "log.txt");
     }
 
     public void runClient() {
         Message inMessage;
 
         try {
-            while (this.clientName.equals("")) {
+            while (true) {
                 inMessage = readFromChat();
-                registration(consoleConnection, inMessage);
+                if (registration(consoleConnection, inMessage))
+                    break;
             }
 
             Thread reader = new Thread(() -> {
-                Message message = readFromChat();
-                messageAnalise(message);
+                while (!Thread.currentThread().isInterrupted()) {
+                    Message message = readFromChat();
+                    messageAnalise(message);
+                }
             });
             reader.start();
 
@@ -83,7 +90,7 @@ public class Client {
 
     public void send(Message message) {
         try {
-            connection.write("\r\nFrom: " + this.clientName +
+            connection.write("\r\nFrom: " + ClientName.getName() +
                     "\r\nData-length: " + message.getBodyLength() +
                     "\r\nMessage: \n" +
                     message.getBody() + "\r\n" +
@@ -102,10 +109,10 @@ public class Client {
         lock.unlock();
 
         if (!scannerData.equals(STOP_WORD)) {
-            send(new Message(this.clientName, scannerData));
+            send(new Message(ClientName.getName(), scannerData));
             return true;
         } else {
-            connection.write("\r\n" + STOP_WORD);
+            connection.write("\r\n" + STOP_WORD + "\r\n");
             return false;
         }
     }
@@ -156,21 +163,21 @@ public class Client {
         return new Message(writerName, bodyLength, textFromBuf, dateFormat.format(date));
     }
 
-    public void registration(ConsoleConnection consoleConnection, Message message) throws IOException {
+    public boolean registration(ConsoleConnection consoleConnection, Message message) throws IOException {
         String body = message.getBody().toLowerCase();
         if (message.getWriter().equals("server")) {
             if (body.contains("enter login") || body.contains("busy")) {
-                this.writtenName = writeName(consoleConnection);
+                ClientName.setName(writeName(consoleConnection));
             } else if (body.contains("welcome")) {
-                this.clientName = this.writtenName;
-                logger = Logger.getLogger(PATH_TO_LOG_DIR, LOG_DIR, this.clientName + ".log");
                 logger.log(message);
+                return true;
             }
         }
+        return false;
     }
 
     public void messageAnalise(Message message) {
-        if (message.getWriter().equals(this.clientName))
+        if (message.getWriter().equals(ClientName.getName()))
             message.setWriter("you");
 
         logger.log(message);
@@ -188,7 +195,7 @@ public class Client {
         condition.signalAll();
         lock.unlock();
 
-        connection.write(scannerData);
+        connection.write(scannerData + "\r\n");
         return scannerData;
     }
 
@@ -212,11 +219,7 @@ public class Client {
     }
 
     public String getClientName() {
-        return clientName;
-    }
-
-    public String getWrittenName() {
-        return writtenName;
+        return ClientName.getName();
     }
 
     public ConsoleConnection getConsoleConnection() {
